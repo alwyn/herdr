@@ -17,9 +17,9 @@ pub use self::{
         upsert_section_value,
     },
     keybinds::{
-        format_prefix_combos, normalize_key_combo, terminal_key_matches_combo, ActionKeybinds,
-        BindingConfig, CommandKeybindConfig, CustomCommandAction, CustomCommandKeybind,
-        IndexedKeybind, KeyCombo, Keybinds, LiveKeybindConfig,
+        format_key_combo, format_prefix_combos, normalize_key_combo, terminal_key_matches_combo,
+        ActionKeybinds, BindingConfig, CommandKeybindConfig, CustomCommandAction,
+        CustomCommandKeybind, IndexedKeybind, KeyCombo, Keybinds, LiveKeybindConfig,
     },
     model::{
         validated_sidebar_bounds, AgentPanelSortConfig, Config, ConfigReloadReport,
@@ -221,7 +221,7 @@ mod tests {
             r#"
 [keys]
 prefix = "ctrl+a"
-new_tab = "prefix+t"
+new_tab = "prefix+c"
 
 [[keys.command]]
 key = "prefix+g"
@@ -233,8 +233,8 @@ command = "lazygit"
         let profile = config.local_keybindings_profile_toml().unwrap();
         assert!(profile.contains("[keys]"));
         assert!(profile.contains("prefix = \"ctrl+a\""));
-        assert!(profile.contains("new_tab = \"prefix+t\""));
-        assert!(profile.contains("next_tab = \"prefix+n\""));
+        assert!(profile.contains("new_tab = \"prefix+c\""));
+        assert!(profile.contains("next_tab = \"prefix+t>l\""));
         assert!(!profile.contains("lazygit"));
         assert!(!profile.contains("command ="));
         assert!(!profile.contains("[[keys.command]]"));
@@ -321,7 +321,7 @@ zoom = "prefix+?"
         let config: Config = toml::from_str(
             r#"
 [keys]
-prefix = "n"
+prefix = "t"
 "#,
         )
         .unwrap();
@@ -329,8 +329,8 @@ prefix = "n"
         let profile = config.local_keybindings_profile_toml().unwrap();
         let round_tripped: Config = toml::from_str(&profile).unwrap();
 
-        assert!(profile.contains("prefix = \"n\""));
-        assert!(!profile.contains("next_tab = \"prefix+n\""));
+        assert!(profile.contains("prefix = \"t\""));
+        assert!(!profile.contains("next_tab = \"prefix+t>l\""));
         assert!(round_tripped.keybinds().next_tab.bindings.is_empty());
     }
 
@@ -386,7 +386,7 @@ tabs = "bogus"
         let config: Config = toml::from_str(
             r#"
 [[keys.command]]
-key = "prefix+n"
+key = "prefix+t>l"
 command = "echo next"
 "#,
         )
@@ -406,7 +406,7 @@ command = "echo next"
         let config: Config = toml::from_str(
             r#"
 [[keys.command]]
-key = "prefix+1"
+key = "prefix+t>1"
 command = "echo one"
 "#,
         )
@@ -422,14 +422,14 @@ command = "echo one"
             .collect();
 
         assert!(!profile.contains("[[keys.command]]"));
-        assert!(!profile.contains("switch_tab = \"prefix+1..9\""));
-        assert!(profile.contains("\"prefix+2\""));
-        assert!(profile.contains("\"prefix+9\""));
-        assert!(!switch_tab_labels.contains(&"prefix+1"));
+        assert!(!profile.contains("switch_tab = \"prefix+t>1..9\""));
+        assert!(profile.contains("\"prefix+t>2\""));
+        assert!(profile.contains("\"prefix+t>9\""));
+        assert!(!switch_tab_labels.contains(&"prefix+t>1"));
         assert_eq!(switch_tab_labels.len(), 8);
         assert!(switch_tab_labels
             .iter()
-            .all(|label| label.starts_with("prefix+")));
+            .all(|label| label.starts_with("prefix+t>")));
     }
 
     #[test]

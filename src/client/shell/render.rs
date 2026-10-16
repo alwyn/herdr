@@ -32,6 +32,7 @@ pub(super) fn render_mode_bar(
     buffer: &mut Buffer,
     pane_area: Rect,
     mode: ClientShellMode,
+    prefix_selector: Option<crate::config::KeyCombo>,
     copy_mode: Option<&ClientCopyModeState>,
     endpoint_error: Option<&str>,
     update_available: bool,
@@ -84,18 +85,40 @@ pub(super) fn render_mode_bar(
     } else {
         match mode {
             ClientShellMode::Prefix => {
-                segments.extend([
-                    (" PREFIX ".to_owned(), mode_style),
-                    (" ".to_owned(), base),
-                    ("esc".to_owned(), key),
-                    (" cancel  ".to_owned(), base),
-                    (prefix, key),
-                    (" send prefix  ".to_owned(), base),
-                    (prefix_rhs(&keybinds.keybinds.workspace_picker), key),
-                    (" workspace nav  ".to_owned(), base),
-                    (prefix_rhs(&keybinds.keybinds.help), key),
-                    (" keybinds".to_owned(), base),
-                ]);
+                if let Some(selector) = prefix_selector {
+                    let mode_label = keybinds
+                        .keybinds
+                        .modal_mode_label(selector)
+                        .unwrap_or("custom")
+                        .to_ascii_uppercase();
+                    segments.extend([
+                        (format!(" {mode_label} MODE "), mode_style),
+                        (" ".to_owned(), base),
+                        ("esc".to_owned(), key),
+                        (" back  ".to_owned(), base),
+                        (prefix, key),
+                        (" modes  ".to_owned(), base),
+                        (prefix_rhs(&keybinds.keybinds.help), key),
+                        (" keybinds".to_owned(), base),
+                    ]);
+                } else {
+                    segments.extend([
+                        (" PREFIX ".to_owned(), mode_style),
+                        (" ".to_owned(), base),
+                        ("esc".to_owned(), key),
+                        (" cancel  ".to_owned(), base),
+                        (prefix, key),
+                        (" send prefix  ".to_owned(), base),
+                    ]);
+                    for (selector, label) in keybinds.keybinds.modal_mode_selectors() {
+                        segments.push((crate::config::format_key_combo(*selector), key));
+                        segments.push((format!(" {label}  "), base));
+                    }
+                    segments.extend([
+                        (prefix_rhs(&keybinds.keybinds.help), key),
+                        (" keybinds".to_owned(), base),
+                    ]);
+                }
             }
             ClientShellMode::Navigate => {
                 segments.extend([

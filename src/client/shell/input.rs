@@ -23,6 +23,46 @@ fn is_ctrl_bracket_key(key: &crate::input::TerminalKey) -> bool {
     key.code == KeyCode::Char('[') && key.modifiers == KeyModifiers::CONTROL
 }
 
+fn modal_action_keeps_mode(binding: &crate::input::KeybindMatch) -> bool {
+    use crate::input::{KeybindAction, KeybindMatch};
+
+    matches!(
+        binding,
+        KeybindMatch::Action(
+            KeybindAction::SwitchWorkspace(_)
+                | KeybindAction::SwitchTab(_)
+                | KeybindAction::FocusAgent(_)
+                | KeybindAction::PreviousWorkspace
+                | KeybindAction::NextWorkspace
+                | KeybindAction::PreviousAgent
+                | KeybindAction::NextAgent
+                | KeybindAction::PreviousTab
+                | KeybindAction::NextTab
+                | KeybindAction::MoveTabPrevious
+                | KeybindAction::MoveTabNext
+                | KeybindAction::FocusPaneLeft
+                | KeybindAction::FocusPaneDown
+                | KeybindAction::FocusPaneUp
+                | KeybindAction::FocusPaneRight
+                | KeybindAction::SwapPaneLeft
+                | KeybindAction::SwapPaneDown
+                | KeybindAction::SwapPaneUp
+                | KeybindAction::SwapPaneRight
+                | KeybindAction::SplitVertical
+                | KeybindAction::SplitHorizontal
+                | KeybindAction::ClearPane
+                | KeybindAction::Zoom
+                | KeybindAction::ResizePaneLeft
+                | KeybindAction::ResizePaneDown
+                | KeybindAction::ResizePaneUp
+                | KeybindAction::ResizePaneRight
+                | KeybindAction::CyclePaneNext
+                | KeybindAction::CyclePanePrevious
+                | KeybindAction::LastPane
+        )
+    )
+}
+
 pub(super) fn is_modal_paste_shortcut_for_platform(
     key: &crate::input::TerminalKey,
     macos: bool,
@@ -677,6 +717,7 @@ impl ClientShellState {
                     return None;
                 }
                 if self.config.keybinds.matches_prefix(key) {
+                    self.prefix_selector = None;
                     self.mode = ClientShellMode::Prefix;
                     outcome.repaint = true;
                     return None;
@@ -692,23 +733,65 @@ impl ClientShellState {
                     ClientShellMode::Terminal
                 };
                 if self.config.keybinds.matches_prefix(key) {
+                    if self.prefix_selector.take().is_some() {
+                        outcome.repaint = true;
+                        return None;
+                    }
+                    self.prefix_selector = None;
                     self.mode = return_mode;
                     outcome.repaint = true;
                     return self.focused_pane_id().map(ClientInputTarget::Pane);
                 }
                 if key.code == KeyCode::Esc {
+                    self.prefix_selector = None;
                     self.mode = return_mode;
                     outcome.repaint = true;
+                    return None;
+                }
+                if let Some(selector) = self.prefix_selector {
+                    if let Some(binding) = crate::input::resolve_modal_binding(
+                        &self.config.keybinds.keybinds,
+                        selector,
+                        key,
+                    ) {
+                        if modal_action_keeps_mode(&binding) {
+                            self.prefix_selector = Some(selector);
+                        } else {
+                            self.prefix_selector = None;
+                            self.mode = return_mode;
+                        }
+                        outcome.repaint = true;
+                        self.record_binding(binding, outcome);
+                        return None;
+                    }
+                    if let Some(binding) =
+                        crate::input::resolve_prefix_binding(&self.config.keybinds.keybinds, key)
+                    {
+                        self.prefix_selector = None;
+                        self.mode = return_mode;
+                        outcome.repaint = true;
+                        self.record_binding(binding, outcome);
+                        return None;
+                    }
                     return None;
                 }
                 if let Some(binding) =
                     crate::input::resolve_prefix_binding(&self.config.keybinds.keybinds, key)
                 {
+                    self.prefix_selector = None;
                     self.mode = return_mode;
                     outcome.repaint = true;
                     self.record_binding(binding, outcome);
                     return None;
                 }
+                if let Some(selector) =
+                    crate::input::resolve_modal_selector(&self.config.keybinds.keybinds, key)
+                {
+                    self.prefix_selector = Some(selector);
+                    outcome.repaint = true;
+                    return None;
+                }
+                self.prefix_selector = None;
                 self.mode = return_mode;
                 outcome.repaint = true;
                 None
@@ -728,6 +811,7 @@ impl ClientShellState {
                     .is_none_or(|copy_mode| copy_mode.search_prompt.is_none())
                     && self.config.keybinds.matches_prefix(key)
                 {
+                    self.prefix_selector = None;
                     self.mode = ClientShellMode::Prefix;
                     outcome.repaint = true;
                 } else {
@@ -1072,6 +1156,7 @@ impl ClientShellState {
     fn input_context(&self) -> ClientInputContext {
         ClientInputContext {
             mode: self.mode,
+            prefix_selector: self.prefix_selector,
             overlay: self.overlay.as_ref().map(ClientShellOverlay::kind),
             popup_terminal_id: self.popup_input_target().and_then(|target| match target {
                 ClientInputTarget::Popup(terminal_id) => Some(terminal_id),

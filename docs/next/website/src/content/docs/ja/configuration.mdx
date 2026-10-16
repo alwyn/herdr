@@ -125,7 +125,7 @@ manage_ssh_config = true
 
 プレフィックスの導入ガイドと検証済みのプレフィックスなし構成については、[キーボード](/docs/keyboard/)を参照してください。
 
-Herdr には tmux に似たプレフィックスモードがあります。デフォルトのプレフィックスは `ctrl+b` です。キーバインド文字列は明示的です。`prefix+n` は設定されたプレフィックスを押してから `n` を押すという意味で、`ctrl+alt+n` はターミナルモードの直接ショートカットです。
+Herdr には tmux に似たプレフィックスモードがあります。デフォルトのプレフィックスは `ctrl+b` です。キーバインド文字列は明示的です。`prefix+g` は設定されたプレフィックスを押してから `g` を押す操作、`prefix+t>n` は `t` でタブモードに入り、続けて `n` を押す操作です。`ctrl+alt+n` はターミナルモードの直接ショートカットです。
 
 小さなキーバインドの上書きは次のようになります:
 
@@ -133,13 +133,13 @@ Herdr には tmux に似たプレフィックスモードがあります。デ�
 [keys]
 prefix = "ctrl+b"
 goto = "prefix+g"
-new_tab = "prefix+c"
-next_tab = "prefix+n"
-previous_tab = "prefix+p"
-focus_pane_left = "prefix+h"
+new_tab = "prefix+t>n"
+next_tab = "prefix+t>l"
+previous_tab = "prefix+t>h"
+focus_pane_left = "prefix+p>h"
 navigate_workspace_down = "j"
 navigate_pane_down = "ctrl+j"
-split_horizontal = "prefix+minus"
+split_horizontal = "prefix+p>s"
 ```
 
 `keys.prefix` は、複数のキーからプレフィックスモードに入りたい場合には配列も受け付けます。たとえば、macOS とリモート Linux マシンで 1 つの設定を共有できます:
@@ -157,7 +157,7 @@ prefix = ["ctrl+space", "ctrl+s"]
 
 ```toml
 [keys]
-next_tab = ["prefix+n", "ctrl+alt+]"]
+next_tab = ["prefix+t>l", "ctrl+alt+]"]
 ```
 
 任意のアクションはデフォルトでは未設定です。プレフィックスモードの挙動には `prefix+` でバインドし、意図的に直接ショートカットにする場合は明示的な修飾キーコードを使ってください。たとえば、リサイズモードに入らず tmux のように 1 回のキー操作でペインをリサイズできます:
@@ -170,7 +170,7 @@ resize_pane_up = "ctrl+shift+alt+up"
 resize_pane_right = "ctrl+shift+alt+right"
 ```
 
-キー文字列には、通常のキー、`ctrl+a`、`shift+n`、`alt+1`、`cmd+k` のような修飾キーの組み合わせ、`enter`、`tab`、`esc`、`left`、`right`、`up`、`down` のような特殊キーが使えます。`minus`、`comma`、`ampersand`、`plus`、`backtick` のような名前付き記号も使えます。`n` のような通常の印字可能キーの直接バインドは入力を妨げるため危険です。意図的に直接バインドするのでなければ `prefix+n` を使ってください。`navigate_workspace_*` と `navigate_pane_*` のフィールドはナビゲートモード専用で、`j` や `k` のような通常のキーを使えます。これらには `prefix+`、`esc`、`enter`、`tab`、`shift+tab`、`left`、`right`、修飾なしの `1` から `9` は使えません。左右の矢印キーは、左ペインと右ペインへのナビゲーションの恒久的なエイリアスです。これらのナビゲートモードショートカットは、`focus_pane_down = "prefix+j"` のような一般アクションのバインドから独立しています。両方に同じキーが使われている場合、ナビゲートモードが開いている間はナビゲートモードのショートカットが優先されます。Alt、Cmd/Super、修飾キー付き記号は、ターミナルと tmux の設定に依存します。
+キー文字列には、通常のキー、`ctrl+a`、`shift+n`、`alt+1`、`cmd+k` のような修飾キーの組み合わせ、`enter`、`tab`、`esc`、`left`、`right`、`up`、`down` のような特殊キーが使えます。`minus`、`comma`、`ampersand`、`plus`、`backtick` のような名前付き記号も使えます。`n` のような通常の印字可能キーの直接バインドは入力を妨げるため危険です。意図的に直接バインドするのでなければ `prefix+n` を使ってください。`navigate_workspace_*` と `navigate_pane_*` のフィールドはナビゲートモード専用で、`j` や `k` のような通常のキーを使えます。これらには `prefix+`、`esc`、`enter`、`tab`、`shift+tab`、`left`、`right`、修飾なしの `1` から `9` は使えません。左右の矢印キーは、左ペインと右ペインへのナビゲーションの恒久的なエイリアスです。これらのナビゲートモードショートカットは、`focus_pane_down = "prefix+p>j"` のような一般アクションのバインドから独立しています。両方に同じキーが使われている場合、ナビゲートモードが開いている間はナビゲートモードのショートカットが優先されます。Alt、Cmd/Super、修飾キー付き記号は、ターミナルと tmux の設定に依存します。
 
 古いカスタムキーバインドを使っていて新しいデフォルトが欲しい場合は、`herdr config reset-keys` を実行してください。Herdr は `config.toml` をバックアップし、`[keys]` と `[[keys.command]]` を削除し、再起動または `herdr server reload-config` の後に組み込みの v2 デフォルトを使います。
 
@@ -180,9 +180,9 @@ resize_pane_right = "ctrl+shift+alt+right"
 
 ```toml
 [keys]
-switch_tab = "prefix+1..9"
-switch_workspace = "prefix+shift+1..9"
-focus_agent = "prefix+alt+1..9"
+switch_tab = "prefix+t>1..9"
+switch_workspace = "prefix+w>1..9"
+focus_agent = "prefix+a>1..9"
 ```
 
 レガシーな `[keys.indexed]` テーブルは互換性のために引き続きパースされますが、新しい設定では明示的なアクションフィールドを使ってください。

@@ -125,7 +125,7 @@ manage_ssh_config = true
 
 有关前缀键的引导式介绍和经过验证的免前缀配置，请参阅[键盘](/docs/keyboard/)。
 
-Herdr 提供类似 tmux 的前缀模式。默认前缀是 `ctrl+b`。按键绑定字符串是显式的：`prefix+n` 表示先按配置的前缀，再按 `n`；`ctrl+alt+n` 则是终端模式下的直接快捷键。
+Herdr 提供类似 tmux 的前缀模式。默认前缀是 `ctrl+b`。按键绑定字符串是显式的：`prefix+g` 表示先按配置的前缀，再按 `g`；`prefix+t>n` 表示按 `t` 进入标签模式，再按 `n` 执行动作；`ctrl+alt+n` 则是终端模式下的直接快捷键。
 
 一个简短的按键绑定覆盖如下：
 
@@ -133,13 +133,13 @@ Herdr 提供类似 tmux 的前缀模式。默认前缀是 `ctrl+b`。按键绑�
 [keys]
 prefix = "ctrl+b"
 goto = "prefix+g"
-new_tab = "prefix+c"
-next_tab = "prefix+n"
-previous_tab = "prefix+p"
-focus_pane_left = "prefix+h"
+new_tab = "prefix+t>n"
+next_tab = "prefix+t>l"
+previous_tab = "prefix+t>h"
+focus_pane_left = "prefix+p>h"
 navigate_workspace_down = "j"
 navigate_pane_down = "ctrl+j"
-split_horizontal = "prefix+minus"
+split_horizontal = "prefix+p>s"
 ```
 
 需要通过多个按键进入前缀模式时，`keys.prefix` 也接受数组。例如，可让 macOS 和远程 Linux 机器共享同一份配置：
@@ -157,7 +157,7 @@ prefix = ["ctrl+space", "ctrl+s"]
 
 ```toml
 [keys]
-next_tab = ["prefix+n", "ctrl+alt+]"]
+next_tab = ["prefix+t>l", "ctrl+alt+]"]
 ```
 
 可选动作默认不设置。使用 `prefix+` 可获得前缀模式行为；当你确实需要直接快捷键时，请使用显式的修饰组合键。例如，可以像 tmux 一样通过一次按键调整窗格大小，而无需进入调整大小模式：
@@ -170,7 +170,7 @@ resize_pane_up = "ctrl+shift+alt+up"
 resize_pane_right = "ctrl+shift+alt+right"
 ```
 
-按键字符串支持普通按键、`ctrl+a`、`shift+n`、`alt+1`、`cmd+k` 等修饰组合键，以及 `enter`、`tab`、`esc`、`left`、`right`、`up`、`down` 等特殊键。也支持 `minus`、`comma`、`ampersand`、`plus`、`backtick` 等命名标点。直接绑定 `n` 这样的普通可打印键并不安全，因为它会拦截输入；除非你有意设置直接绑定，否则请使用 `prefix+n`。`navigate_workspace_*` 和 `navigate_pane_*` 字段仅在导航模式中生效，可以使用 `j` 或 `k` 等普通按键；它们不得使用 `prefix+`、`esc`、`enter`、`tab`、`shift+tab`、`left`、`right`，也不得使用无修饰键的 `1` 到 `9`。左右方向键是向左和向右导航窗格的永久别名。这些导航模式快捷键独立于 `focus_pane_down = "prefix+j"` 等通用动作绑定；两者使用同一按键时，打开导航模式后，导航模式快捷键优先。Alt、Cmd/Super 以及带修饰键的标点取决于你的终端和 tmux 设置。
+按键字符串支持普通按键、`ctrl+a`、`shift+n`、`alt+1`、`cmd+k` 等修饰组合键，以及 `enter`、`tab`、`esc`、`left`、`right`、`up`、`down` 等特殊键。也支持 `minus`、`comma`、`ampersand`、`plus`、`backtick` 等命名标点。直接绑定 `n` 这样的普通可打印键并不安全，因为它会拦截输入；除非你有意设置直接绑定，否则请使用 `prefix+n`。`navigate_workspace_*` 和 `navigate_pane_*` 字段仅在导航模式中生效，可以使用 `j` 或 `k` 等普通按键；它们不得使用 `prefix+`、`esc`、`enter`、`tab`、`shift+tab`、`left`、`right`，也不得使用无修饰键的 `1` 到 `9`。左右方向键是向左和向右导航窗格的永久别名。这些导航模式快捷键独立于 `focus_pane_down = "prefix+p>j"` 等通用动作绑定；两者使用同一按键时，打开导航模式后，导航模式快捷键优先。Alt、Cmd/Super 以及带修饰键的标点取决于你的终端和 tmux 设置。
 
 如果你已有旧的自定义按键绑定，并想使用新的默认值，请运行 `herdr config reset-keys`。Herdr 会备份 `config.toml`，移除 `[keys]` 和 `[[keys.command]]`，并在重启或执行 `herdr server reload-config` 后使用内置的 v2 默认值。
 
@@ -180,9 +180,9 @@ resize_pane_right = "ctrl+shift+alt+right"
 
 ```toml
 [keys]
-switch_tab = "prefix+1..9"
-switch_workspace = "prefix+shift+1..9"
-focus_agent = "prefix+alt+1..9"
+switch_tab = "prefix+t>1..9"
+switch_workspace = "prefix+w>1..9"
+focus_agent = "prefix+a>1..9"
 ```
 
 旧版 `[keys.indexed]` 表仍会出于兼容性而解析，但新配置应优先使用显式的动作字段。

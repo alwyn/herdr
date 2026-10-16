@@ -135,8 +135,8 @@ const DEFAULT_CONFIG: &str = r##"# herdr configuration
 [keys]
 # Prefix key to enter prefix mode (default: "ctrl+b")
 # Examples: "ctrl+b", "f12", "esc", "-"
-# Action bindings use explicit syntax: "prefix+n" requires the prefix;
-# "ctrl+alt+n" is a direct terminal-mode shortcut.
+# Action bindings use "prefix+n" for prefix mode and "prefix+t>n" for a
+# mode followed by an action. A "ctrl+alt+n" binding is a direct shortcut.
 # Accepted key syntax: plain keys, ctrl/shift/alt/cmd/super modifiers, and special keys like enter/tab/esc/left/right/up/down.
 # Named punctuation such as minus, comma, ampersand, plus, and backtick is also accepted.
 # Most reliable direct bindings are ctrl+letter, function keys, and explicit modified chords.
@@ -149,44 +149,45 @@ const DEFAULT_CONFIG: &str = r##"# herdr configuration
 # detach = "prefix+q"
 # reload_config = "prefix+shift+r"
 # open_notification_target = "prefix+o"
-# workspace_picker = "prefix+w"
+# workspace_picker = "prefix+w>p"
 # goto = "prefix+g"
-# new_workspace = "prefix+shift+n"
-# new_worktree = "prefix+shift+g"
+# Mode selectors: w workspace, a agent, t tab, p pane.
+# new_workspace = "prefix+w>n"
+# new_worktree = "prefix+w>g"
 # open_worktree = ""    # optional, unset by default
 # remove_worktree = ""  # optional, unset by default; opens confirmation
-# rename_workspace = "prefix+shift+w"
-# close_workspace = "prefix+shift+d"
-# previous_workspace = "" # optional, unset by default
-# next_workspace = ""     # optional, unset by default
-# previous_agent = ""     # optional, unset by default
-# next_agent = ""         # optional, unset by default
-# focus_agent = ""        # optional indexed binding, e.g. "prefix+alt+1..9"
+# rename_workspace = "prefix+w>r"
+# close_workspace = "prefix+w>x"
+# previous_workspace = "prefix+w>k"
+# next_workspace = "prefix+w>j"
+# previous_agent = "prefix+a>k"
+# next_agent = "prefix+a>j"
+# focus_agent = "prefix+a>1..9"
 # remote_image_paste = "ctrl+v" # only active in herdr --remote; empty disables raw-key image paste
-# new_tab = "prefix+c"
-# rename_tab = "prefix+shift+t"
-# previous_tab = "prefix+p"
-# next_tab = "prefix+n"
-# move_tab_previous = ""   # optional, e.g. "alt+shift+left" moves the tab toward the front
-# move_tab_next = ""       # optional, e.g. "alt+shift+right" moves the tab toward the back
-# switch_tab = "prefix+1..9"
-# switch_workspace = ""   # optional indexed binding, e.g. "prefix+shift+1..9"
-# close_tab = "prefix+shift+x"
-# rename_pane = "prefix+shift+p"
-# edit_scrollback = "prefix+e"
+# new_tab = "prefix+t>n"
+# rename_tab = "prefix+t>r"
+# previous_tab = "prefix+t>h"
+# next_tab = "prefix+t>l"
+# move_tab_previous = "prefix+t>shift+h"
+# move_tab_next = "prefix+t>shift+l"
+# switch_tab = "prefix+t>1..9"
+# switch_workspace = "prefix+w>1..9"
+# close_tab = "prefix+t>x"
+# rename_pane = "prefix+p>n"
+# edit_scrollback = "prefix+p>e"
 # clear_pane = ""                  # unbound; e.g. "prefix+ctrl+k"
-# focus_pane_left = "prefix+h"
-# focus_pane_down = "prefix+j"
-# focus_pane_up = "prefix+k"
-# focus_pane_right = "prefix+l"
-# cycle_pane_next = "prefix+tab"
-# cycle_pane_previous = "prefix+shift+tab"
+# focus_pane_left = "prefix+p>h"
+# focus_pane_down = "prefix+p>j"
+# focus_pane_up = "prefix+p>k"
+# focus_pane_right = "prefix+p>l"
+# cycle_pane_next = "prefix+p>tab"
+# cycle_pane_previous = "prefix+p>shift+tab"
 # last_pane = ""          # optional, unset by default; bind e.g. "prefix+tab" for global back-and-forth
-# split_vertical = "prefix+v"
-# split_horizontal = "prefix+minus"
-# close_pane = "prefix+x"
-# zoom = "prefix+z"       # legacy alias: fullscreen
-# resize_mode = "prefix+r"
+# split_vertical = "prefix+p>v"
+# split_horizontal = "prefix+p>s"
+# close_pane = "prefix+p>x"
+# zoom = "prefix+p>z"     # legacy alias: fullscreen
+# resize_mode = "prefix+p>r"
 # resize_pane_left = ""   # optional, e.g. "ctrl+shift+alt+left" resizes without entering resize mode
 # resize_pane_down = ""   # optional, e.g. "ctrl+shift+alt+down"
 # resize_pane_up = ""     # optional, e.g. "ctrl+shift+alt+up"

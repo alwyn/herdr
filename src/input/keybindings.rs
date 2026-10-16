@@ -90,6 +90,147 @@ pub(crate) fn resolve_prefix_binding(
     })
 }
 
+pub(crate) fn resolve_modal_selector(
+    keybinds: &Keybinds,
+    key: &TerminalKey,
+) -> Option<crate::config::KeyCombo> {
+    keybinds.modal_mode_for_key(key).or_else(|| {
+        generated_character_key(key)
+            .and_then(|generated_key| keybinds.modal_mode_for_key(&generated_key))
+    })
+}
+
+pub(crate) fn resolve_modal_binding(
+    keybinds: &Keybinds,
+    selector: crate::config::KeyCombo,
+    key: &TerminalKey,
+) -> Option<KeybindMatch> {
+    resolve_modal_exact_binding(keybinds, selector, key).or_else(|| {
+        generated_character_key(key).and_then(|generated_key| {
+            resolve_modal_exact_binding(keybinds, selector, &generated_key)
+        })
+    })
+}
+
+fn resolve_modal_exact_binding(
+    keybinds: &Keybinds,
+    selector: crate::config::KeyCombo,
+    key: &TerminalKey,
+) -> Option<KeybindMatch> {
+    resolve_modal_non_indexed_action(keybinds, selector, key)
+        .map(KeybindMatch::Action)
+        .or_else(|| {
+            keybinds
+                .custom_commands
+                .iter()
+                .find(|binding| binding.bindings.matches_sequence(selector, key))
+                .cloned()
+                .map(KeybindMatch::Command)
+        })
+        .or_else(|| resolve_modal_indexed_action(keybinds, selector, key).map(KeybindMatch::Action))
+}
+
+fn resolve_modal_non_indexed_action(
+    keybinds: &Keybinds,
+    selector: crate::config::KeyCombo,
+    key: &TerminalKey,
+) -> Option<KeybindAction> {
+    for (bindings, action) in [
+        (&keybinds.help, KeybindAction::Help),
+        (&keybinds.settings, KeybindAction::Settings),
+        (&keybinds.workspace_picker, KeybindAction::WorkspacePicker),
+        (&keybinds.new_workspace, KeybindAction::NewWorkspace),
+        (&keybinds.new_worktree, KeybindAction::NewWorktree),
+        (&keybinds.open_worktree, KeybindAction::OpenWorktree),
+        (&keybinds.remove_worktree, KeybindAction::RemoveWorktree),
+        (&keybinds.rename_workspace, KeybindAction::RenameWorkspace),
+        (&keybinds.close_workspace, KeybindAction::CloseWorkspace),
+        (
+            &keybinds.previous_workspace,
+            KeybindAction::PreviousWorkspace,
+        ),
+        (&keybinds.next_workspace, KeybindAction::NextWorkspace),
+        (&keybinds.previous_agent, KeybindAction::PreviousAgent),
+        (&keybinds.next_agent, KeybindAction::NextAgent),
+        (&keybinds.new_tab, KeybindAction::NewTab),
+        (&keybinds.rename_tab, KeybindAction::RenameTab),
+        (&keybinds.previous_tab, KeybindAction::PreviousTab),
+        (&keybinds.next_tab, KeybindAction::NextTab),
+        (&keybinds.move_tab_previous, KeybindAction::MoveTabPrevious),
+        (&keybinds.move_tab_next, KeybindAction::MoveTabNext),
+        (&keybinds.close_tab, KeybindAction::CloseTab),
+        (&keybinds.rename_pane, KeybindAction::RenamePane),
+        (&keybinds.edit_scrollback, KeybindAction::EditScrollback),
+        (&keybinds.clear_pane, KeybindAction::ClearPane),
+        (&keybinds.copy_mode, KeybindAction::CopyMode),
+        (&keybinds.focus_pane_left, KeybindAction::FocusPaneLeft),
+        (&keybinds.focus_pane_down, KeybindAction::FocusPaneDown),
+        (&keybinds.focus_pane_up, KeybindAction::FocusPaneUp),
+        (&keybinds.focus_pane_right, KeybindAction::FocusPaneRight),
+        (&keybinds.swap_pane_left, KeybindAction::SwapPaneLeft),
+        (&keybinds.swap_pane_down, KeybindAction::SwapPaneDown),
+        (&keybinds.swap_pane_up, KeybindAction::SwapPaneUp),
+        (&keybinds.swap_pane_right, KeybindAction::SwapPaneRight),
+        (&keybinds.last_pane, KeybindAction::LastPane),
+        (&keybinds.cycle_pane_next, KeybindAction::CyclePaneNext),
+        (
+            &keybinds.cycle_pane_previous,
+            KeybindAction::CyclePanePrevious,
+        ),
+        (&keybinds.split_vertical, KeybindAction::SplitVertical),
+        (&keybinds.split_horizontal, KeybindAction::SplitHorizontal),
+        (&keybinds.close_pane, KeybindAction::ClosePane),
+        (&keybinds.zoom, KeybindAction::Zoom),
+        (&keybinds.resize_mode, KeybindAction::EnterResizeMode),
+        (&keybinds.resize_pane_left, KeybindAction::ResizePaneLeft),
+        (&keybinds.resize_pane_down, KeybindAction::ResizePaneDown),
+        (&keybinds.resize_pane_up, KeybindAction::ResizePaneUp),
+        (&keybinds.resize_pane_right, KeybindAction::ResizePaneRight),
+        (&keybinds.toggle_sidebar, KeybindAction::ToggleSidebar),
+        (&keybinds.reload_config, KeybindAction::ReloadConfig),
+        (
+            &keybinds.open_notification_target,
+            KeybindAction::OpenNotificationTarget,
+        ),
+        (&keybinds.detach, KeybindAction::Detach),
+        (&keybinds.goto, KeybindAction::OpenNavigator),
+    ] {
+        if bindings.matches_sequence(selector, key) {
+            return Some(action);
+        }
+    }
+    None
+}
+
+fn resolve_modal_indexed_action(
+    keybinds: &Keybinds,
+    selector: crate::config::KeyCombo,
+    key: &TerminalKey,
+) -> Option<KeybindAction> {
+    for binding in &keybinds.switch_tab {
+        if binding.trigger.sequence_selector() == Some(selector) {
+            if let Some(index) = binding.matched_index(key) {
+                return Some(KeybindAction::SwitchTab(index));
+            }
+        }
+    }
+    for binding in &keybinds.switch_workspace {
+        if binding.trigger.sequence_selector() == Some(selector) {
+            if let Some(index) = binding.matched_index(key) {
+                return Some(KeybindAction::SwitchWorkspace(index));
+            }
+        }
+    }
+    for binding in &keybinds.focus_agent {
+        if binding.trigger.sequence_selector() == Some(selector) {
+            if let Some(index) = binding.matched_index(key) {
+                return Some(KeybindAction::FocusAgent(index));
+            }
+        }
+    }
+    None
+}
+
 pub(crate) fn resolve_non_indexed_action(
     keybinds: &Keybinds,
     key: &TerminalKey,
@@ -188,7 +329,7 @@ pub(crate) fn resolve_indexed_action(
         let trigger_matches = |binding: &crate::config::IndexedKeybind| {
             let dispatch_matches = match dispatch {
                 KeybindDispatch::Direct => binding.trigger.is_direct(),
-                KeybindDispatch::Prefix => binding.trigger.is_prefix(),
+                KeybindDispatch::Prefix => binding.trigger.is_single_prefix(),
             };
             let expected_modifiers = crate::config::normalize_key_combo(binding.trigger.combo()).1;
             dispatch_matches && (actual_modifiers == expected_modifiers) == exact_modifiers
@@ -313,9 +454,11 @@ mod tests {
             Some(KeybindMatch::Action(KeybindAction::Help))
         ));
 
+        let tab_mode = TerminalKey::new(KeyCode::Char('t'), KeyModifiers::empty());
+        let selector = resolve_modal_selector(&keybinds, &tab_mode).expect("tab mode selector");
         let one = TerminalKey::new(KeyCode::Char('1'), KeyModifiers::empty());
         assert!(matches!(
-            resolve_prefix_binding(&keybinds, &one),
+            resolve_modal_binding(&keybinds, selector, &one),
             Some(KeybindMatch::Action(KeybindAction::SwitchTab(0)))
         ));
     }

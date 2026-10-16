@@ -758,6 +758,7 @@ pub(super) enum ClientInputTarget {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct ClientInputContext {
     pub(super) mode: ClientShellMode,
+    pub(super) prefix_selector: Option<crate::config::KeyCombo>,
     pub(super) overlay: Option<ClientShellOverlayKind>,
     pub(super) popup_terminal_id: Option<String>,
     pub(super) popup_pending: bool,
@@ -900,6 +901,7 @@ pub(crate) struct ClientShellState {
     pub(super) active_endpoint_id: ClientEndpointId,
     pub(super) collapsed_endpoints: HashSet<ClientEndpointId>,
     pub(super) mode: ClientShellMode,
+    pub(super) prefix_selector: Option<crate::config::KeyCombo>,
     pub(super) navigate_workspace_id: Option<WorkspaceNavigationTarget>,
     pub(super) pending_workspace_highlight: Option<PendingWorkspaceHighlight>,
     pub(super) reveal_navigation_workspace: bool,
@@ -1074,6 +1076,7 @@ impl ClientShellState {
             active_endpoint_id: ClientEndpointId::Local,
             collapsed_endpoints: HashSet::new(),
             mode: ClientShellMode::Terminal,
+            prefix_selector: None,
             navigate_workspace_id: None,
             pending_workspace_highlight: None,
             reveal_navigation_workspace: false,
@@ -1275,6 +1278,7 @@ impl ClientShellState {
             .startup_onboarding
             .then_some(ClientShellOverlay::Onboarding);
         self.previous_pane_id = None;
+        self.prefix_selector = None;
         self.pane_mouse_gesture = None;
         self.link_hover = None;
         self.url_click_consumes_until_up = false;
@@ -1405,6 +1409,7 @@ impl ClientShellState {
                     ClientShellMode::Prefix | ClientShellMode::Navigate | ClientShellMode::Resize
                 )
             {
+                self.prefix_selector = None;
                 self.mode = ClientShellMode::Terminal;
             }
         }
@@ -1677,6 +1682,7 @@ impl ClientShellState {
                     .remove_target(&ClientInputTarget::Popup(terminal_id.clone()));
             }
             self.mode = ClientShellMode::Terminal;
+            self.prefix_selector = None;
             self.navigate_workspace_id = None;
             if !matches!(
                 self.overlay.as_ref(),
